@@ -20,7 +20,7 @@ _main:
 
     mov x19, x0          ; file descriptor
     mov x20, #50         ; current dial position
-    mov x21, #0          ; count of rotations ending at 0
+    mov x21, #0          ; count of clicks landing on 0
     mov x22, #0          ; current direction
     mov x23, #0          ; current distance
     mov x26, #0          ; pending rotation flag
@@ -105,6 +105,36 @@ finish:
 
 apply_rotation:
     cmp x22, #'R'
+    b.eq count_right
+
+    cbz x20, left_from_zero
+    mov x0, x20
+    b count_hits
+
+left_from_zero:
+    mov x0, #100
+    b count_hits
+
+count_right:
+    cbz x20, right_from_zero
+    mov x0, #100
+    sub x0, x0, x20
+    b count_hits
+
+right_from_zero:
+    mov x0, #100
+
+count_hits:
+    cmp x23, x0
+    b.lt update_position
+    sub x1, x23, x0
+    mov x2, #100
+    udiv x1, x1, x2
+    add x1, x1, #1
+    add x21, x21, x1
+
+update_position:
+    cmp x22, #'R'
     b.eq rotate_right
 
     sub x20, x20, x23
@@ -122,9 +152,6 @@ reduce_position:
     add x20, x20, #100
 
 check_zero:
-    cbnz x20, rotation_done
-    add x21, x21, #1
-
 rotation_done:
     ret
 
